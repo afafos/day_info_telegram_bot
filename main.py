@@ -4,15 +4,16 @@ import requests
 from datetime import datetime
 from telebot import types
 from datetime import datetime, timedelta
+from api import *
 
 
-OWM_API_KEY = '70ace1e09cefbe1713f28e1b8cae72da'
+OpWeather_api = openweather_api
 
-bot = telebot.TeleBot('6756741753:AAEEvn9EGOOvVa47GZDXN8OqUzuoA9cjcMY')
+bot = telebot.TeleBot(telegram_api)
 
 
 def get_current_weather_info(latitude, longitude):
-    url = f'https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={OWM_API_KEY}'
+    url = f'https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={OpWeather_api}'
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -23,7 +24,7 @@ def get_current_weather_info(latitude, longitude):
 
 
 def get_forecast_info(latitude, longitude):
-    url = f'https://api.openweathermap.org/data/2.5/forecast?lat={latitude}&lon={longitude}&appid={OWM_API_KEY}'
+    url = f'https://api.openweathermap.org/data/2.5/forecast?lat={latitude}&lon={longitude}&appid={OpWeather_api}'
     response = requests.get(url)
 
     if response.status_code == 200:
