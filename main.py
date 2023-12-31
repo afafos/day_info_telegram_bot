@@ -59,12 +59,12 @@ def parse_weather_data(weather_data):
 def parse_forecast_data(weather_data):
     forecast_list = weather_data['list']
 
-    tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%d-%m-%Y')
 
     forecast_messages = []
     for forecast in forecast_list:
         timestamp = forecast['dt']
-        forecast_date = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        forecast_date = datetime.utcfromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M:%S')
 
         if forecast_date[:10] != tomorrow_date:
             continue
