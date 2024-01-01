@@ -138,7 +138,7 @@ def handle_text(message):
         if coordinates:
             user_id = message.from_user.id
             coordinates_dict = {"user_coordinates": {"latitude": coordinates[0], "longitude": coordinates[1]}}
-            with open(f"user_{user_id}_coordinates.json", "w") as json_file:
+            with open(f"user_{user_id}.json", "w") as json_file:
                 json.dump(coordinates_dict, json_file)
 
             current_weather_info = get_current_weather_info(coordinates[0], coordinates[1])
