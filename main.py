@@ -4,12 +4,50 @@ import requests
 from datetime import datetime, timedelta
 from api import *
 
-# Replace with your actual API keys
 openweather_api = opweather_api
 mapquest_api = mapq_api
 telegram_api = tg_api
+deepai_api = ai_api
 
 bot = telebot.TeleBot(telegram_api)
+
+
+def get_cur_weather_description(current_weather_info):
+    payload = {
+        'text': 'Write a description, saving all weather data without specifying dates and times. {}'.format(current_weather_info)
+    }
+
+    headers = {
+        'api-key': deepai_api
+    }
+
+    response = requests.post("https://api.deepai.org/api/text-generator", data=payload, headers=headers)
+
+    if response.status_code == 200:
+        result = response.json()
+        brief_description = result.get('output', 'No description available')
+        return brief_description
+    else:
+        return 'Failed to get description'
+
+
+def get_forecast_description(forecast_info):
+    payload = {
+        'text': 'Write a description saving all the weather data without specifying dates and times. {}'.format(forecast_info)
+    }
+
+    headers = {
+        'api-key': deepai_api
+    }
+
+    response = requests.post("https://api.deepai.org/api/text-generator", data=payload, headers=headers)
+
+    if response.status_code == 200:
+        result = response.json()
+        brief_description = result.get('output', 'No description available')
+        return brief_description
+    else:
+        return 'Failed to get description'
 
 
 def get_coordinates_by_address(address):
@@ -142,10 +180,12 @@ def handle_text(message):
                 json.dump(coordinates_dict, json_file)
 
             current_weather_info = get_current_weather_info(coordinates[0], coordinates[1])
-            bot.send_message(message.chat.id, "Current Weather:\n\n" + current_weather_info)
+            current_weather_info_ai = get_cur_weather_description(current_weather_info)
+            bot.send_message(message.chat.id, "Current Weather:\n\n" + current_weather_info_ai)
 
             forecast_info = get_forecast_info(coordinates[0], coordinates[1])
-            bot.send_message(message.chat.id, "Weather Forecast:\n\n" + forecast_info)
+            forecast_info_ai = get_forecast_description(forecast_info)
+            bot.send_message(message.chat.id, "Weather Forecast:\n\n" + forecast_info_ai)
         else:
             bot.send_message(message.chat.id, f"Failed to get coordinates for the location: {address}")
     except ValueError:
