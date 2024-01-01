@@ -7,6 +7,8 @@ from api import *
 from get_weather import *
 from get_astrology import *
 from get_exchange_rate import *
+from get_news import *
+
 
 bot = telebot.TeleBot(telegram_api)
 
@@ -25,10 +27,12 @@ def handle_find(message):
     button_astro = telebot.types.InlineKeyboardButton(text="Get an Astrological Forecast",
                                                       callback_data="astro_forecast")
     button_exchange_rate = telebot.types.InlineKeyboardButton(text="Get Exchange Rate", callback_data="exchange_rate")
+    button_news = telebot.types.InlineKeyboardButton(text="Get the latest news", callback_data="news")
 
     markup.add(button_forecast)
     markup.add(button_astro)
     markup.add(button_exchange_rate)
+    markup.add(button_news)
 
     bot.send_message(message.chat.id, f"Today's date: {today_date}", reply_markup=markup)
 
@@ -44,6 +48,9 @@ def callback_handler(call):
     elif call.data == "exchange_rate":
         bot.send_message(call.message.chat.id, "Please enter the base currency:")
         bot.register_next_step_handler(call.message, process_currency_input, call.message.chat.id)
+    elif call.data == "news":
+        bot.send_message(call.message.chat.id, "Please enter the country:")
+        bot.register_next_step_handler(call.message, process_news_input, call.message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
