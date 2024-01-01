@@ -8,7 +8,7 @@ from get_weather import *
 from get_astrology import *
 from get_exchange_rate import *
 from get_news import *
-
+from get_quote import *
 
 bot = telebot.TeleBot(telegram_api)
 
@@ -22,6 +22,8 @@ def handle_start(message):
 def handle_find(message):
     today_date = datetime.now().strftime("%d-%m-%Y")
 
+    random_quote = get_random_quote()
+
     markup = telebot.types.InlineKeyboardMarkup()
     button_forecast = telebot.types.InlineKeyboardButton(text="Get Weather Forecast", callback_data="weather_forecast")
     button_astro = telebot.types.InlineKeyboardButton(text="Get an Astrological Forecast",
@@ -34,7 +36,7 @@ def handle_find(message):
     markup.add(button_exchange_rate)
     markup.add(button_news)
 
-    bot.send_message(message.chat.id, f"Today's date: {today_date}", reply_markup=markup)
+    bot.send_message(message.chat.id, f"<b>Today's date:</b> {today_date}\n\n{random_quote}", reply_markup=markup, parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: True)
