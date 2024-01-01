@@ -10,8 +10,14 @@ from get_exchange_rate import *
 from get_news import *
 from get_quote import *
 from get_historical_events import *
+from get_holidays import *
 
 bot = telebot.TeleBot(telegram_api)
+
+
+def handle_error(chat_id, error_message):
+    print(error_message)
+    bot.send_message(chat_id, error_message)
 
 
 @bot.message_handler(commands=['start'])
@@ -33,12 +39,14 @@ def handle_find(message):
     button_news = telebot.types.InlineKeyboardButton(text="Get the latest news", callback_data="news")
     button_historical_events = telebot.types.InlineKeyboardButton(text="Get information about this day in history",
                                                                   callback_data="historical_events")
+    button_holidays = telebot.types.InlineKeyboardButton(text="Get holidays", callback_data="holidays")
 
     markup.add(button_forecast)
     markup.add(button_astro)
     markup.add(button_exchange_rate)
     markup.add(button_news)
     markup.add(button_historical_events)
+    markup.add(button_holidays)
 
     bot.send_message(message.chat.id, f"<b>Today's date:</b> {today_date}\n\n{random_quote}", reply_markup=markup,
                      parse_mode="HTML")
@@ -60,6 +68,8 @@ def callback_handler(call):
         bot.register_next_step_handler(call.message, process_news_input, call.message.chat.id)
     elif call.data == "historical_events":
         send_historical_events(call.message.chat.id)
+    elif call.data == "holidays":
+        send_holidays(call.message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
