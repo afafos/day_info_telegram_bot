@@ -3,6 +3,7 @@ import json
 import requests
 from datetime import datetime, timedelta
 from api import *
+from bs4 import BeautifulSoup
 
 openweather_api = opweather_api
 mapquest_api = mapq_api
@@ -10,6 +11,37 @@ telegram_api = tg_api
 deepai_api = ai_api
 
 bot = telebot.TeleBot(telegram_api)
+
+
+def process_zodiac_input(message, chat_id):
+    signs = {
+        "aries": 1,
+        "taurus": 2,
+        "gemini": 3,
+        "cancer": 4,
+        "leo": 5,
+        "virgo": 6,
+        "libra": 7,
+        "scorpio": 8,
+        "sagittarius": 9,
+        "capricorn": 10,
+        "aquarius": 11,
+        "pisces": 12,
+    }
+    given_sign = message.text.lower()
+    if given_sign in signs:
+        URL = "https://www.horoscope.com/us/horoscopes/general/horoscope-general-daily-today.aspx?sign=" + \
+              str(signs[given_sign])
+
+        r = requests.get(URL)
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        container = soup.find("p")
+        horoscope_text = container.text.strip()
+
+        bot.send_message(chat_id, f"Horoscope for {given_sign.capitalize()}:\n\n{horoscope_text}")
+    else:
+        bot.send_message(chat_id, "Invalid zodiac sign. Please enter a valid zodiac sign.")
 
 
 def get_cur_weather_description(current_weather_info):
@@ -154,8 +186,10 @@ def handle_find(message):
     today_date = datetime.now().strftime("%d-%m-%Y")
 
     markup = telebot.types.InlineKeyboardMarkup()
-    button = telebot.types.InlineKeyboardButton(text="Get Weather Forecast", callback_data="weather_forecast")
-    markup.add(button)
+    button_forecast = telebot.types.InlineKeyboardButton(text="Get Weather Forecast", callback_data="weather_forecast")
+    button_astro = telebot.types.InlineKeyboardButton(text="Get an Astrological Forecast",
+                                                      callback_data="astro_forecast")
+    markup.add(button_forecast, button_astro)
 
     bot.send_message(message.chat.id, f"Today's date: {today_date}", reply_markup=markup)
 
@@ -165,6 +199,9 @@ def callback_handler(call):
     if call.data == "weather_forecast":
         keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         bot.send_message(call.message.chat.id, "Please share your location:", reply_markup=keyboard)
+    elif call.data == "astro_forecast":
+        bot.send_message(call.message.chat.id, "Please enter your zodiac sign:")
+        bot.register_next_step_handler(call.message, process_zodiac_input, call.message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
