@@ -9,6 +9,7 @@ from get_astrology import *
 from get_exchange_rate import *
 from get_news import *
 from get_quote import *
+from get_historical_events import *
 
 bot = telebot.TeleBot(telegram_api)
 
@@ -30,13 +31,17 @@ def handle_find(message):
                                                       callback_data="astro_forecast")
     button_exchange_rate = telebot.types.InlineKeyboardButton(text="Get Exchange Rate", callback_data="exchange_rate")
     button_news = telebot.types.InlineKeyboardButton(text="Get the latest news", callback_data="news")
+    button_historical_events = telebot.types.InlineKeyboardButton(text="Get information about this day in history",
+                                                                  callback_data="historical_events")
 
     markup.add(button_forecast)
     markup.add(button_astro)
     markup.add(button_exchange_rate)
     markup.add(button_news)
+    markup.add(button_historical_events)
 
-    bot.send_message(message.chat.id, f"<b>Today's date:</b> {today_date}\n\n{random_quote}", reply_markup=markup, parse_mode="HTML")
+    bot.send_message(message.chat.id, f"<b>Today's date:</b> {today_date}\n\n{random_quote}", reply_markup=markup,
+                     parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -53,6 +58,8 @@ def callback_handler(call):
     elif call.data == "news":
         bot.send_message(call.message.chat.id, "Please enter the country:")
         bot.register_next_step_handler(call.message, process_news_input, call.message.chat.id)
+    elif call.data == "historical_events":
+        send_historical_events(call.message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
