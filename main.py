@@ -14,7 +14,7 @@ bot = telebot.TeleBot(telegram_api)
 
 def get_cur_weather_description(current_weather_info):
     payload = {
-        'text': 'Write a description, saving all weather data without specifying dates and times. {}'.format(current_weather_info)
+        'text': 'Write a description, saving all weather data without dates and times. {}'.format(current_weather_info)
     }
 
     headers = {
@@ -33,7 +33,7 @@ def get_cur_weather_description(current_weather_info):
 
 def get_forecast_description(forecast_info):
     payload = {
-        'text': 'Write a description saving all the weather data without specifying dates and times. {}'.format(forecast_info)
+        'text': 'Write a description saving all the weather data without dates and times. {}'.format(forecast_info)
     }
 
     headers = {
