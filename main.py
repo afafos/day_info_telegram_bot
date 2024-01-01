@@ -5,12 +5,47 @@ from datetime import datetime, timedelta
 from api import *
 from bs4 import BeautifulSoup
 
-openweather_api = opweather_api
-mapquest_api = mapq_api
-telegram_api = tg_api
-deepai_api = ai_api
-
 bot = telebot.TeleBot(telegram_api)
+
+
+def get_and_display_inverse_rates(api_key, base_currency, selected_currencies, chat_id):
+    url = f'https://v6.exchangerate-api.com/v6/{api_key}/latest/{base_currency}'
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+
+        if response.status_code == 200 and data['result'] == 'success':
+            rates = data['conversion_rates']
+
+            if rates:
+                rates_message = "<b>Exchange rates:</b>\n\n"
+                for currency in selected_currencies:
+                    if currency in rates:
+                        rate = rates[currency]
+                        inverse_rate = 1 / rate
+                        inverse_rate_formatted = '{:.2f}'.format(inverse_rate)
+                        rates_message += f"<b>{currency}:</b> {inverse_rate_formatted}\n"
+                    else:
+                        rates_message += f"<b>{currency}:</b> Exchange rate not available.\n"
+
+                bot.send_message(chat_id, rates_message, parse_mode="HTML")
+            else:
+                bot.send_message(chat_id, "Error: No exchange rates available.")
+        else:
+            bot.send_message(chat_id, f"Error: {data['error']} - {data['info']}")
+
+    except Exception as e:
+        bot.send_message(chat_id, f"An error occurred: {e}")
+
+
+def process_currency_input(message, chat_id):
+    base_currency = message.text.upper()
+    if base_currency.isalpha():
+        selected_currencies = ['USD', 'EUR', 'JPY', 'GBP', 'CHF', 'CAD', 'AUD', 'CNY', 'SEK', 'NZD']
+        get_and_display_inverse_rates(exchange_api, base_currency, selected_currencies, chat_id)
+    else:
+        bot.send_message(chat_id, "Invalid currency code. Please enter a valid 3-letter currency code.")
 
 
 def process_zodiac_input(message, chat_id):
@@ -39,7 +74,8 @@ def process_zodiac_input(message, chat_id):
         container = soup.find("p")
         horoscope_text = container.text.strip()
 
-        bot.send_message(chat_id, f"Horoscope for {given_sign.capitalize()}:\n\n{horoscope_text}")
+        bot.send_message(chat_id, f"<b>Horoscope for {given_sign.capitalize()}:</b>\n\n{horoscope_text}",
+                         parse_mode="HTML")
     else:
         bot.send_message(chat_id, "Invalid zodiac sign. Please enter a valid zodiac sign.")
 
@@ -189,7 +225,11 @@ def handle_find(message):
     button_forecast = telebot.types.InlineKeyboardButton(text="Get Weather Forecast", callback_data="weather_forecast")
     button_astro = telebot.types.InlineKeyboardButton(text="Get an Astrological Forecast",
                                                       callback_data="astro_forecast")
-    markup.add(button_forecast, button_astro)
+    button_exchange_rate = telebot.types.InlineKeyboardButton(text="Get Exchange Rate", callback_data="exchange_rate")
+
+    markup.add(button_forecast)
+    markup.add(button_astro)
+    markup.add(button_exchange_rate)
 
     bot.send_message(message.chat.id, f"Today's date: {today_date}", reply_markup=markup)
 
@@ -202,6 +242,9 @@ def callback_handler(call):
     elif call.data == "astro_forecast":
         bot.send_message(call.message.chat.id, "Please enter your zodiac sign:")
         bot.register_next_step_handler(call.message, process_zodiac_input, call.message.chat.id)
+    elif call.data == "exchange_rate":
+        bot.send_message(call.message.chat.id, "Please enter the base currency:")
+        bot.register_next_step_handler(call.message, process_currency_input, call.message.chat.id)
 
 
 @bot.message_handler(func=lambda message: True, content_types=["text"])
@@ -218,11 +261,12 @@ def handle_text(message):
 
             current_weather_info = get_current_weather_info(coordinates[0], coordinates[1])
             current_weather_info_ai = get_cur_weather_description(current_weather_info)
-            bot.send_message(message.chat.id, "Current Weather:\n\n" + current_weather_info_ai)
+            bot.send_message(message.chat.id, "<b>Current Weather:</b>\n\n" + current_weather_info_ai,
+                             parse_mode="HTML")
 
             forecast_info = get_forecast_info(coordinates[0], coordinates[1])
             forecast_info_ai = get_forecast_description(forecast_info)
-            bot.send_message(message.chat.id, "Weather Forecast:\n\n" + forecast_info_ai)
+            bot.send_message(message.chat.id, "<b>Weather Forecast:</b>\n\n" + forecast_info_ai, parse_mode="HTML")
         else:
             bot.send_message(message.chat.id, f"Failed to get coordinates for the location: {address}")
     except ValueError:
