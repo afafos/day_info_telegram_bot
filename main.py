@@ -14,6 +14,8 @@ from get_quote import *
 from get_historical_events import *
 from get_holidays import *
 from handle_error import *
+from show_notes import *
+from save_note import *
 
 bot = telebot.TeleBot(telegram_api)
 
@@ -42,49 +44,19 @@ def handle_show_notes(message):
     bot.register_next_step_handler(message, show_notes)
 
 
-def show_notes(message):
-    user_id = message.from_user.id
-    date_str = message.text
-
-    try:
-        date = datetime.strptime(date_str, "%d-%m-%Y")
-    except ValueError:
-        bot.send_message(message.chat.id, "Invalid date format. Please enter the date in the format DD-MM-YYYY.")
-        return
+@bot.callback_query_handler(func=lambda call: call.data.startswith("delete_note_"))
+def delete_note_handler(call):
+    note_id = int(call.data.split("_")[2])
 
     conn = sqlite3.connect("telegram_bot.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT Note FROM Notes WHERE User_ID = ? AND Date = ?", (user_id, date_str))
-    notes = cursor.fetchall()
-
-    conn.close()
-
-    if not notes:
-        bot.send_message(message.chat.id, f"No notes found for the date {date_str}.")
-    else:
-        formatted_notes = "\n\n".join(f"{index + 1}. {note[0]}" for index, note in enumerate(notes))
-        bot.send_message(message.chat.id, f"<b>Notes for {date_str}:</b>\n\n{formatted_notes}", parse_mode="HTML")
-
-
-def save_note(message, user_id):
-    note = message.text
-    date = datetime.now().strftime("%d-%m-%Y")
-
-    conn = sqlite3.connect("telegram_bot.db")
-    cursor = conn.cursor()
-
-    cursor.execute("INSERT OR IGNORE INTO Users (User_ID) VALUES (?)", (user_id,))
-
-    cursor.execute("SELECT User_ID FROM Users WHERE User_ID = ?", (user_id,))
-    user_id = cursor.fetchone()[0]
-
-    cursor.execute("INSERT INTO Notes (User_ID, Date, Note) VALUES (?, ?, ?)", (user_id, date, note))
-
+    cursor.execute("DELETE FROM Notes WHERE Note_ID = ?", (note_id,))
     conn.commit()
+
     conn.close()
 
-    bot.send_message(message.chat.id, "Note saved successfully!")
+    bot.answer_callback_query(callback_query_id=call.id, show_alert=False, text="Note deleted successfully.")
 
 
 @bot.message_handler(commands=['find'])
