@@ -3,6 +3,7 @@ import json
 import requests
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from telebot import types
 from api import *
 from get_weather import *
 from get_astrology import *
@@ -13,13 +14,15 @@ from get_historical_events import *
 from get_holidays import *
 from handle_error import *
 
-
 bot = telebot.TeleBot(telegram_api)
 
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    bot.send_message(message.chat.id, "Hello! Enter the /find command to get information about the current day!")
+    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    item1 = types.KeyboardButton("Write note")
+    markup.add(item1)
+    bot.send_message(message.chat.id, "Hello! Enter the /find command to get information about the current day!", reply_markup=markup)
 
 
 @bot.message_handler(commands=['find'])
