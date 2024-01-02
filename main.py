@@ -23,6 +23,8 @@ def handle_start(message):
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     item1 = types.KeyboardButton("Write note")
     markup.add(item1)
+    item2 = types.KeyboardButton("Show notes")
+    markup.add(item2)
     bot.send_message(message.chat.id, "Hello! Enter the /find command to get information about the current day!",
                      reply_markup=markup)
 
@@ -34,9 +36,40 @@ def handle_write_note(message):
     bot.register_next_step_handler(note_text, save_note, user_id)
 
 
+@bot.message_handler(func=lambda message: message.text == "Show notes")
+def handle_show_notes(message):
+    bot.send_message(message.chat.id, "Please enter the date (DD-MM-YYYY) for which you want to see the notes:")
+    bot.register_next_step_handler(message, show_notes)
+
+
+def show_notes(message):
+    user_id = message.from_user.id
+    date_str = message.text
+
+    try:
+        date = datetime.strptime(date_str, "%d-%m-%Y")
+    except ValueError:
+        bot.send_message(message.chat.id, "Invalid date format. Please enter the date in the format DD-MM-YYYY.")
+        return
+
+    conn = sqlite3.connect("telegram_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT Note FROM Notes WHERE User_ID = ? AND Date = ?", (user_id, date_str))
+    notes = cursor.fetchall()
+
+    conn.close()
+
+    if not notes:
+        bot.send_message(message.chat.id, f"No notes found for the date {date_str}.")
+    else:
+        formatted_notes = "\n\n".join(f"{index + 1}. {note[0]}" for index, note in enumerate(notes))
+        bot.send_message(message.chat.id, f"<b>Notes for {date_str}:</b>\n\n{formatted_notes}", parse_mode="HTML")
+
+
 def save_note(message, user_id):
     note = message.text
-    date = datetime.now().strftime("%Y-%m-%d")
+    date = datetime.now().strftime("%d-%m-%Y")
 
     conn = sqlite3.connect("telegram_bot.db")
     cursor = conn.cursor()
