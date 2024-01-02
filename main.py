@@ -1,6 +1,7 @@
 import telebot
 import json
 import requests
+import sqlite3
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from telebot import types
@@ -22,7 +23,35 @@ def handle_start(message):
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     item1 = types.KeyboardButton("Write note")
     markup.add(item1)
-    bot.send_message(message.chat.id, "Hello! Enter the /find command to get information about the current day!", reply_markup=markup)
+    bot.send_message(message.chat.id, "Hello! Enter the /find command to get information about the current day!",
+                     reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text == "Write note")
+def handle_write_note(message):
+    user_id = message.from_user.id
+    note_text = bot.send_message(message.chat.id, "Please enter your note:")
+    bot.register_next_step_handler(note_text, save_note, user_id)
+
+
+def save_note(message, user_id):
+    note = message.text
+    date = datetime.now().strftime("%Y-%m-%d")
+
+    conn = sqlite3.connect("telegram_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute("INSERT OR IGNORE INTO Users (User_ID) VALUES (?)", (user_id,))
+
+    cursor.execute("SELECT User_ID FROM Users WHERE User_ID = ?", (user_id,))
+    user_id = cursor.fetchone()[0]
+
+    cursor.execute("INSERT INTO Notes (User_ID, Date, Note) VALUES (?, ?, ?)", (user_id, date, note))
+
+    conn.commit()
+    conn.close()
+
+    bot.send_message(message.chat.id, "Note saved successfully!")
 
 
 @bot.message_handler(commands=['find'])
