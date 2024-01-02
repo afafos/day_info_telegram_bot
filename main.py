@@ -11,13 +11,10 @@ from get_news import *
 from get_quote import *
 from get_historical_events import *
 from get_holidays import *
+from handle_error import *
+
 
 bot = telebot.TeleBot(telegram_api)
-
-
-def handle_error(chat_id, error_message):
-    print(error_message)
-    bot.send_message(chat_id, error_message)
 
 
 @bot.message_handler(commands=['start'])
